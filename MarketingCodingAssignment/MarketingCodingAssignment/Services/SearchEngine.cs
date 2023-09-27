@@ -159,7 +159,7 @@ namespace MarketingCodingAssignment.Services
 			}).ToList();
 		}
 
-		public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
+		public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum, string dateFrom, string dateTo)
         {
             // Construct a machine-independent path for the index
             string basePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -190,12 +190,21 @@ namespace MarketingCodingAssignment.Services
             Query rq = NumericRangeQuery.NewInt32Range("Runtime", durationMinimum, durationMaximum, true, true);
             Query vaq = NumericRangeQuery.NewDoubleRange("VoteAverage", voteAverageMinimum, 10.0, true, true);
 
-            // Apply the filters.
-            BooleanQuery bq = new()
-            {
-                { pq, Occur.MUST },
-                { rq, Occur.MUST }
-            };
+			// Apply the filters.
+			BooleanQuery bq = new()
+			{
+				{ pq, Occur.MUST },
+				{ rq, Occur.MUST }
+			};
+
+			if (dateFrom != null && dateTo != null)
+			{
+				var parsedDateFrom = DateTime.Parse(dateFrom);
+				var parsedDateTo = DateTime.Parse(dateTo);
+
+				Query releaseDateQuery = TermRangeQuery.NewStringRange("ReleaseDate", DateTools.DateToString(parsedDateFrom, DateResolution.DAY), DateTools.DateToString(parsedDateTo, DateResolution.DAY), true, true);
+				bq.Add(releaseDateQuery, Occur.MUST);
+			}
 
             searcher.Search(bq, collector);
             int startIndex = (startPage) * rowsPerPage;

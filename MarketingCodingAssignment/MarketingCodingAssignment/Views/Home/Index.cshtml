@@ -125,6 +125,19 @@
             updateSearchAndResetCount();
         });
 
+		var picker = new Lightpick({
+			field: document.getElementById('dateFrom'),
+			secondField: document.getElementById('dateTo'),
+			singleDate: false,
+			onSelect: function (start, end) {
+				var str = '';
+				str += start ? start.format('Do MMMM YYYY') + ' to ' : '';
+				str += end ? end.format('Do MMMM YYYY') : '...';
+				document.getElementById('result-3').innerHTML = str;
+			},
+			format: "MM/DD/YYYY"
+		});
+
         function updateSearchAndResetCount() {
             currentPage = 0;
             updateSearch();
@@ -145,7 +158,9 @@
                     data: {
                         voteAverageMinimum: document.getElementById("voteAverageMinimumFacet").value,
                         durationMinimum: document.getElementById("durationMinimumFacet").value,
-                        durationMaximum: document.getElementById("durationMaximumFacet").value
+                        durationMaximum: document.getElementById("durationMaximumFacet").value,
+						dateFrom: document.getElementById("dateFrom").value,
+						dateTo: document.getElementById("dateTo").value
                     },
                     beforeSend: function () {
                         showLoadingOverlay();
@@ -304,6 +319,11 @@
                 <option value="10.0">10.0</option>
             </select>
         </div>
+		<div style="display:inline-block;">
+			<label for="voteAverageMinimumFacet">Release Date</label>
+			<input type="text" id="dateFrom" class="form-control form-control-sm">
+			<input type="text" id="dateTo" class="form-control form-control-sm">
+		</div>
     </div>
     <div id="results-count" style="margin-top: 30px">
         <span>
