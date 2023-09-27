@@ -91,7 +91,7 @@ namespace MarketingCodingAssignment.Services
                     new TextField("Tagline", film.Tagline, Field.Store.YES),
                     new Int64Field("Revenue", film.Revenue ?? 0, Field.Store.YES),
                     new DoubleField("VoteAverage", film.VoteAverage ?? 0.0, Field.Store.YES),
-                    new TextField("CombinedText", film.Title + film.Tagline + film.Overview, Field.Store.NO)
+                    new TextField("CombinedText", film.Title + " " + film.Tagline + " " + film.Overview, Field.Store.NO)
                 };
                 writer.AddDocument(doc);
             }
@@ -116,7 +116,7 @@ namespace MarketingCodingAssignment.Services
             return;
         }
 
-		public SearchResultsViewModel Autocomplete(string searchString)
+		public IEnumerable<FilmLuceneRecord> Autocomplete(string searchString)
 		{
 			// Construct a machine-independent path for the index
 			string basePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -126,34 +126,33 @@ namespace MarketingCodingAssignment.Services
 			StandardAnalyzer analyzer = new(AppLuceneVersion);
 
 			// Create an index writer
-			IndexWriterConfig indexConfig = new(AppLuceneVersion, analyzer) {
-			using IndexWriter writer = new(dir, indexConfig) {
+			IndexWriterConfig indexConfig = new(AppLuceneVersion, analyzer);
+			using IndexWriter writer = new(dir, indexConfig);
 			using DirectoryReader reader = writer.GetReader(applyAllDeletes: true);
-			var searcher = new IndexSearcher(reader);
-			var hits = searcher.Search(new PhraseQuery()
-				{
-					new Term("CombinedText", searchString.ToLowerInvariant())
-				}, 20).ScoreDocs;
-
-			return new SearchResultsViewModel()
+			var terms = searchString.ToLowerInvariant().Split(" ").Where(s => !string.IsNullOrEmpty(s));
+			var query = new PhraseQuery();
+			foreach (var t in terms)
 			{
-				RecordsCount = hits.Length,
-				Films = hits.Select(s =>
+				query.Add(new Term("CombinedText", t.Trim()));
+			}
+			var searcher = new IndexSearcher(reader);
+			var hits = searcher.Search(query, 20).ScoreDocs;
+
+			return hits.Select(s =>
+			{
+				var foundDoc = searcher.Doc(s.Doc);
+				return new FilmLuceneRecord()
 				{
-					var foundDoc = searcher.Doc(s.Doc);
-					return new FilmLuceneRecord()
-					{
-						Id = foundDoc.Get("Id").ToString(),
-						Title = foundDoc.Get("Title").ToString(),
-						Overview = foundDoc.Get("Overview").ToString(),
-						Runtime = int.TryParse(foundDoc.Get("Runtime"), out int parsedRuntime) ? parsedRuntime : 0,
-						Tagline = foundDoc.Get("Tagline").ToString(),
-						Revenue = long.TryParse(foundDoc.Get("Revenue"), out long parsedRevenue) ? parsedRevenue : 0,
-						VoteAverage = double.TryParse(foundDoc.Get("VoteAverage"), out double parsedVoteAverage) ? parsedVoteAverage : 0.0,
-						Score = s.Score
-					};
-				})
-			};
+					Id = foundDoc.Get("Id").ToString(),
+					Title = foundDoc.Get("Title").ToString(),
+					Overview = foundDoc.Get("Overview").ToString(),
+					Runtime = int.TryParse(foundDoc.Get("Runtime"), out int parsedRuntime) ? parsedRuntime : 0,
+					Tagline = foundDoc.Get("Tagline").ToString(),
+					Revenue = long.TryParse(foundDoc.Get("Revenue"), out long parsedRevenue) ? parsedRevenue : 0,
+					VoteAverage = double.TryParse(foundDoc.Get("VoteAverage"), out double parsedVoteAverage) ? parsedVoteAverage : 0.0,
+					Score = s.Score
+				};
+			}).ToList();
 		}
 
 		public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
@@ -174,11 +173,16 @@ namespace MarketingCodingAssignment.Services
             int hitsLimit = 1000;
             TopScoreDocCollector collector = TopScoreDocCollector.Create(hitsLimit, true);
 
-            // If there's no search string, just return everything.
-            Query pq = new PhraseQuery()
-                {
-                    new Term("CombinedText", searchString.ToLowerInvariant())
-                };
+			// If there's no search string, just return everything.
+			var pq = new PhraseQuery();
+
+			var terms = searchString.ToLowerInvariant().Split(" ");
+
+			foreach(var t in terms)
+			{
+				pq.Add(new Term("CombinedText", t.Trim()));
+			}
+
             Query rq = NumericRangeQuery.NewInt32Range("Runtime", durationMinimum, durationMaximum, true, true);
             Query vaq = NumericRangeQuery.NewDoubleRange("VoteAverage",0.0, 10.0, true, true);
 

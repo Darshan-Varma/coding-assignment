@@ -38,7 +38,7 @@ namespace MarketingCodingAssignment.Controllers
 		public JsonResult Autocomplete(string term)
 		{
 			var results = _searchEngine.Autocomplete(term);
-			return Json(results);
+			return Json(results.Select(r => new { label=r.Title }));
 		}
 
 		[HttpPost]
