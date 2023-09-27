@@ -184,7 +184,7 @@ namespace MarketingCodingAssignment.Services
 			}
 
             Query rq = NumericRangeQuery.NewInt32Range("Runtime", durationMinimum, durationMaximum, true, true);
-            Query vaq = NumericRangeQuery.NewDoubleRange("VoteAverage",0.0, 10.0, true, true);
+            Query vaq = NumericRangeQuery.NewDoubleRange("VoteAverage", voteAverageMinimum, 10.0, true, true);
 
             // Apply the filters.
             BooleanQuery bq = new()
