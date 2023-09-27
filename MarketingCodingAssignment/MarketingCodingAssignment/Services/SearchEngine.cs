@@ -56,8 +56,9 @@ namespace MarketingCodingAssignment.Services
                 Runtime = int.TryParse(x.Runtime, out int parsedRuntime) ? parsedRuntime : 0,
                 Tagline = x.Tagline,
                 Revenue = long.TryParse(x.Revenue, out long parsedRevenue) ? parsedRevenue : 0,
-                VoteAverage = double.TryParse(x.VoteAverage, out double parsedVoteAverage) ? parsedVoteAverage : 0
-            }).ToList();
+                VoteAverage = double.TryParse(x.VoteAverage, out double parsedVoteAverage) ? parsedVoteAverage : 0,
+				ReleaseDate = DateTime.TryParse(x.ReleaseDate, out DateTime parsedDate) ? parsedDate : null
+			}).ToList();
 
             // Write the records to the lucene index
             PopulateIndex(luceneFilms);
@@ -82,7 +83,9 @@ namespace MarketingCodingAssignment.Services
             //Add to the index
             foreach (var film in films)
             {
-                Document doc = new()
+				var releaseDate = film.ReleaseDate.HasValue ? DateTools.DateToString(film.ReleaseDate.Value, DateResolution.DAY) : "";
+
+				Document doc = new()
                 {
                     new StringField("Id", film.Id, Field.Store.YES),
                     new TextField("Title", film.Title, Field.Store.YES),
@@ -91,8 +94,9 @@ namespace MarketingCodingAssignment.Services
                     new TextField("Tagline", film.Tagline, Field.Store.YES),
                     new Int64Field("Revenue", film.Revenue ?? 0, Field.Store.YES),
                     new DoubleField("VoteAverage", film.VoteAverage ?? 0.0, Field.Store.YES),
-                    new TextField("CombinedText", film.Title + " " + film.Tagline + " " + film.Overview, Field.Store.NO)
-                };
+                    new TextField("CombinedText", film.Title + " " + film.Tagline + " " + film.Overview, Field.Store.NO),
+					new StringField("ReleaseDate", releaseDate, Field.Store.YES),
+				};
                 writer.AddDocument(doc);
             }
 
@@ -211,7 +215,8 @@ namespace MarketingCodingAssignment.Services
                     Tagline = foundDoc.Get("Tagline").ToString(),
                     Revenue = long.TryParse(foundDoc.Get("Revenue"), out long parsedRevenue) ? parsedRevenue : 0,
                     VoteAverage =  double.TryParse(foundDoc.Get("VoteAverage"), out double parsedVoteAverage) ? parsedVoteAverage : 0.0,
-                    Score = hit.Score
+                    Score = hit.Score,
+					ReleaseDate= DateTools.StringToDate(foundDoc.Get("ReleaseDate").ToString())
                 };
                 films.Add(film);
             }

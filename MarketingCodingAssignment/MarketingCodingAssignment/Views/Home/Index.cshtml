@@ -196,7 +196,7 @@
                     lines.push("</div>");
                 }
 
-                if (item.releasedate) lines.push("<div>Initially released " + humanDate(item.releasedate) + "</div>");
+				if (item.releaseDate) lines.push("<div>Initially released " + new Date(item.releaseDate).toLocaleDateString() + "</div>");
                 if (item.overview) lines.push("<div class='overview'>" + item.overview + "</div>");
                 lines.push("</div>");
                 lines.push("</div>");
