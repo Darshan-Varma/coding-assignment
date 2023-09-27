@@ -31,10 +31,17 @@ namespace MarketingCodingAssignment.Controllers
         public JsonResult Search(string searchString, int start, int rows, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
         {
             SearchResultsViewModel searchResults = _searchEngine.Search(searchString, start, rows, durationMinimum, durationMaximum, voteAverageMinimum);
-            return Json(new {searchResults});
+            return Json(new {searchResults}); 
         }
 
-        [HttpPost]
+		[HttpGet]
+		public JsonResult Autocomplete(string term)
+		{
+			var results = _searchEngine.Autocomplete(term);
+			return Json(results);
+		}
+
+		[HttpPost]
         public void ReloadIndex()
         {
             DeleteIndex();

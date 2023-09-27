@@ -116,7 +116,47 @@ namespace MarketingCodingAssignment.Services
             return;
         }
 
-        public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
+		public SearchResultsViewModel Autocomplete(string searchString)
+		{
+			// Construct a machine-independent path for the index
+			string basePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+			string indexPath = Path.Combine(basePath, "index");
+			using FSDirectory dir = FSDirectory.Open(indexPath);
+			// Create an analyzer to process the text
+			StandardAnalyzer analyzer = new(AppLuceneVersion);
+
+			// Create an index writer
+			IndexWriterConfig indexConfig = new(AppLuceneVersion, analyzer) {
+			using IndexWriter writer = new(dir, indexConfig) {
+			using DirectoryReader reader = writer.GetReader(applyAllDeletes: true);
+			var searcher = new IndexSearcher(reader);
+			var hits = searcher.Search(new PhraseQuery()
+				{
+					new Term("CombinedText", searchString.ToLowerInvariant())
+				}, 20).ScoreDocs;
+
+			return new SearchResultsViewModel()
+			{
+				RecordsCount = hits.Length,
+				Films = hits.Select(s =>
+				{
+					var foundDoc = searcher.Doc(s.Doc);
+					return new FilmLuceneRecord()
+					{
+						Id = foundDoc.Get("Id").ToString(),
+						Title = foundDoc.Get("Title").ToString(),
+						Overview = foundDoc.Get("Overview").ToString(),
+						Runtime = int.TryParse(foundDoc.Get("Runtime"), out int parsedRuntime) ? parsedRuntime : 0,
+						Tagline = foundDoc.Get("Tagline").ToString(),
+						Revenue = long.TryParse(foundDoc.Get("Revenue"), out long parsedRevenue) ? parsedRevenue : 0,
+						VoteAverage = double.TryParse(foundDoc.Get("VoteAverage"), out double parsedVoteAverage) ? parsedVoteAverage : 0.0,
+						Score = s.Score
+					};
+				})
+			};
+		}
+
+		public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
         {
             // Construct a machine-independent path for the index
             string basePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);

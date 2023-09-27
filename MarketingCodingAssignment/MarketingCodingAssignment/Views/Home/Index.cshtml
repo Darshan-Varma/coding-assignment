@@ -116,6 +116,10 @@
             }
         });
 
+		$("#searchtext").autocomplete({
+			source: "@Url.Action("Autocomplete", "Home")"
+		});
+
         // Initial seach button click (returns the intial set of results).
         $("#searchbutton").on("click", function () {
             updateSearchAndResetCount();
