@@ -120,7 +120,7 @@ namespace MarketingCodingAssignment.Services
             return;
         }
 
-        public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
+        public SearchResultsViewModel Search(string searchString, int startPage, int rowsPerPage, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum, string? releaseFromDate, string? releaseToDate)
         {
             // Construct a machine-independent path for the index
             string basePath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -132,7 +132,7 @@ namespace MarketingCodingAssignment.Services
             int hitsLimit = 1000;
             TopScoreDocCollector collector = TopScoreDocCollector.Create(hitsLimit, true);
 
-            var query = this.GetLuceneQuery(searchString, durationMinimum, durationMaximum, voteAverageMinimum);
+            var query = this.GetLuceneQuery(searchString, durationMinimum, durationMaximum, voteAverageMinimum, releaseFromDate, releaseToDate);
 
             searcher.Search(query, collector);
 
@@ -168,7 +168,7 @@ namespace MarketingCodingAssignment.Services
 
             return searchResults;
         }
-        private Query GetLuceneQuery(string searchString, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum)
+        private Query GetLuceneQuery(string searchString, int? durationMinimum, int? durationMaximum, double? voteAverageMinimum, string? releaseFromDate, string? releaseToDate)
         {
             if (string.IsNullOrWhiteSpace(searchString))
             {
@@ -196,6 +196,13 @@ namespace MarketingCodingAssignment.Services
                 { rq, Occur.MUST },
                 { vaq, Occur.MUST}   // Include the vote average filter in the query.
             };
+
+            // Apply Release Date filter only when both the dates are provided.
+            if (releaseFromDate != null && releaseToDate != null)
+            {
+                Query drq = TermRangeQuery.NewStringRange("ReleaseDate", releaseFromDate, releaseToDate, true, true);
+                bq.Add(drq, Occur.MUST);
+            }
 
             return bq;
         }

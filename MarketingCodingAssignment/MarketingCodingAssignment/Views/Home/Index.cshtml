@@ -124,7 +124,9 @@
                 data: {
                     voteAverageMinimum: document.getElementById("voteAverageMinimumFacet").value,
                     durationMinimum: document.getElementById("durationMinimumFacet").value,
-                    durationMaximum: document.getElementById("durationMaximumFacet").value
+                    durationMaximum: document.getElementById("durationMaximumFacet").value,
+                    releaseFromDate: document.getElementById("fromDate").value,
+                    releaseToDate: document.getElementById("toDate").value,
                 },
                 success: function (ajaxResponse) {
                     console.log(ajaxResponse);
@@ -145,6 +147,31 @@
                     document.getElementById("errortext").textContent = "Error! " + ajaxResponse.responseText;
                 }
             });
+        }
+        var fromDateInstance = flatpickr("#fromDate", {
+            dateFormat: "Y-m-d",
+            onChange: function (selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    toDateInstance.set('minDate', selectedDates[0]);
+                }
+                checkBothDates();
+            }
+        });
+
+        var toDateInstance = flatpickr("#toDate", {
+            dateFormat: "Y-m-d",
+            onChange: function (selectedDates, dateStr, instance) {
+                checkBothDates();
+            }
+        });
+
+        // Update Search Results only when both the dates are provided.
+        function checkBothDates() {
+            var fromDate = $('#fromDate').val();
+            var toDate = $('#toDate').val();
+            if (fromDate && toDate) {
+                updateSearchAndResetCount();
+            }
         }
 
         // Apply formatting and append new results.
@@ -269,6 +296,16 @@
                 <option value="9.0">9.0</option>
                 <option value="10.0">10.0</option>
             </select>
+        </div>
+        <div style="display:inline-block;">
+            <label for="fromDate">Release Date (From)</label>
+            <input id="fromDate" class="form-control" style="display: block; width: 150px">
+            </input>
+        </div>
+        <div style="display:inline-block;">
+            <label for="toDate">Release Date (To)</label>
+            <input id="toDate" class="form-control" style="display: block; width: 150px">
+            </input>
         </div>
     </div>
     <div id="results-count" style="margin-top: 30px">
