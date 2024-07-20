@@ -172,6 +172,9 @@
 
                 if (item.releaseDate) lines.push("<div>Initially released " + new Date(item.releaseDate).toLocaleDateString() + "</div>");
                 if (item.overview) lines.push("<div class='overview'>" + item.overview + "</div>");
+
+                // Basic Features: Task 1 - Displaying Voting Average in the search results
+                if (item.voteAverage) lines.push("<span class='voting-average'><b>" + item.voteAverage + "</b> / 10</span>");
                 lines.push("</div>");
                 lines.push("</div>");
             }
