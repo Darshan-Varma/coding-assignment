@@ -55,6 +55,7 @@ namespace MarketingCodingAssignment.Services
                 Title = x.Title,
                 Overview = x.Overview,
                 Runtime = int.TryParse(x.Runtime, out int parsedRuntime) ? parsedRuntime : 0,
+                ReleaseDate = DateTime.TryParse(x.ReleaseDate, out DateTime parsedReleaseDate) ? parsedReleaseDate : null,
                 Tagline = x.Tagline,
                 Revenue = long.TryParse(x.Revenue, out long parsedRevenue) ? parsedRevenue : 0,
                 VoteAverage = double.TryParse(x.VoteAverage, out double parsedVoteAverage) ? parsedVoteAverage : 0
@@ -89,6 +90,8 @@ namespace MarketingCodingAssignment.Services
                     new TextField("Title", film.Title, Field.Store.YES),
                     new TextField("Overview", film.Overview, Field.Store.YES),
                     new Int32Field("Runtime", film.Runtime, Field.Store.YES),
+                    // Store the release date as a StringField, converting DateTime to string
+                    new StringField("ReleaseDate", film.ReleaseDate?.ToString() ?? string.Empty, Field.Store.YES),
                     new TextField("Tagline", film.Tagline, Field.Store.YES),
                     new Int64Field("Revenue", film.Revenue ?? 0, Field.Store.YES),
                     new DoubleField("VoteAverage", film.VoteAverage ?? 0.0, Field.Store.YES),
@@ -147,6 +150,8 @@ namespace MarketingCodingAssignment.Services
                     Title = foundDoc.Get("Title").ToString(),
                     Overview = foundDoc.Get("Overview").ToString(),
                     Runtime = int.TryParse(foundDoc.Get("Runtime"), out int parsedRuntime) ? parsedRuntime : 0,
+                    // Assigning parsed release date from document to view model
+                    ReleaseDate = DateTime.TryParse(foundDoc.Get("ReleaseDate"), out DateTime parsedReleaseDate) ? parsedReleaseDate : null,
                     Tagline = foundDoc.Get("Tagline").ToString(),
                     Revenue = long.TryParse(foundDoc.Get("Revenue"), out long parsedRevenue) ? parsedRevenue : 0,
                     VoteAverage =  double.TryParse(foundDoc.Get("VoteAverage"), out double parsedVoteAverage) ? parsedVoteAverage : 0.0,
