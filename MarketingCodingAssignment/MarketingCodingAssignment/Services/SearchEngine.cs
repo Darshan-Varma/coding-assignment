@@ -11,6 +11,7 @@ using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Lucene.Net.Analysis.En;
+using Lucene.Net.Analysis.TokenAttributes;
 
 namespace MarketingCodingAssignment.Services
 {
@@ -75,7 +76,7 @@ namespace MarketingCodingAssignment.Services
             using FSDirectory dir = FSDirectory.Open(indexPath);
 
             // Create an analyzer to process the text
-            StandardAnalyzer analyzer = new(AppLuceneVersion);
+            EnglishAnalyzer analyzer = new(AppLuceneVersion);
 
             // Create an index writer
             IndexWriterConfig indexConfig = new(AppLuceneVersion, analyzer);
@@ -176,13 +177,25 @@ namespace MarketingCodingAssignment.Services
                 return new MatchAllDocsQuery();
             }
 
-            var pq = new MultiPhraseQuery();
-            foreach (var word in searchString.Split(" ").Where(s => !string.IsNullOrWhiteSpace(s)))
+            // Using EnglishAnalyzer for tokenization and stemming
+            EnglishAnalyzer analyzer = new(AppLuceneVersion);
+
+            var tokens = new List<string>();
+
+            using (var tokenStream = analyzer.GetTokenStream("CombinedText", new StringReader(searchString)))
             {
-                if (!EnglishAnalyzer.DefaultStopSet.Contains(word))
+                tokenStream.Reset();
+                while (tokenStream.IncrementToken())
                 {
-                    pq.Add(new Term("CombinedText", word.ToLowerInvariant()));
+                    var termAttribute = tokenStream.GetAttribute<ICharTermAttribute>();
+                    tokens.Add(termAttribute.ToString());
                 }
+            }
+
+            var pq = new BooleanQuery();
+            foreach (var token in tokens)
+            {
+                pq.Add(new TermQuery(new Term("CombinedText", token)), Occur.MUST);
             }
 
             Query rq = NumericRangeQuery.NewInt32Range("Runtime", durationMinimum, durationMaximum, true, true);
