@@ -178,6 +178,7 @@ namespace MarketingCodingAssignment.Services
             }
 
             // Using EnglishAnalyzer for tokenization and stemming
+            //Reference : https://lucenenet.apache.org/quick-start/tutorial.html
             EnglishAnalyzer analyzer = new(AppLuceneVersion);
 
             var tokens = new List<string>();
